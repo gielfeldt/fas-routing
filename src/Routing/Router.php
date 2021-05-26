@@ -2,6 +2,7 @@
 
 namespace Fas\Routing;
 
+use Fas\Exportable\Exporter;
 use FastRoute\Dispatcher\GroupCountBased;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -16,7 +17,7 @@ class Router
     public function __construct(?ContainerInterface $container = null, ?RouteGroup $routeGroup = null)
     {
         $this->container = $container;
-        $this->routeGroup = $routeGroup ?? new RouteGroup();
+        $this->routeGroup = $routeGroup ?? new RouteGroup(null, $container);
     }
 
     public static function load($filename, ?ContainerInterface $container = null): ?Router
@@ -33,7 +34,8 @@ class Router
     {
         $data = $this->routeGroup->getData();
         $tempfile = tempnam(dirname($filename), 'routegroup');
-        file_put_contents($tempfile, '<?php return ' . Exporter::var_export($data, $this->container) . ';');
+        $exporter = new Exporter();
+        file_put_contents($tempfile, '<?php return ' . $exporter->export($data) . ';');
         rename($tempfile, $filename);
     }
 
@@ -78,5 +80,4 @@ class Router
         }
         throw new HttpException(500, "No route info found");
     }
-
 }

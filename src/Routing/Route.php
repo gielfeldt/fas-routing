@@ -2,13 +2,15 @@
 
 namespace Fas\Routing;
 
-use Closure;
 use Fas\DI\Autowire;
+use Fas\Exportable\ExportableInterface;
+use Fas\Exportable\ExportableRaw;
+use Fas\Exportable\Exporter;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
-class Route
+class Route implements ExportableInterface
 {
 
     private $callback;
@@ -42,30 +44,31 @@ class Route
         return (new RouteHandler($container))->handle($request, $this->getMiddlewares(), $this->callback, $vars);
     }
 
-    public function compile(?ContainerInterface $container = null)
+    public function exportable(Exporter $exporter, $level = 0): string
     {
+        $container = $this->routeGroup->getContainer();
         $autowire = new Autowire($container);
         $middlewares = [];
         foreach ($this->getMiddlewares() as $middleware) {
             if (is_string($middleware) && $container && $container->has($middleware)) {
                 $instance = $container->get($middleware);
                 if ($instance instanceof MiddlewareInterface) {
-                    $middleware = new Raw($autowire->compileCall([$middleware, 'process']));
+                    $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
                 } elseif (is_callable($instance)) {
-                    $middleware = new Raw($autowire->compileCall($middleware));
+                    $middleware = new ExportableRaw($autowire->compileCall($middleware));
                 }
             } elseif (is_string($middleware) && !$container && class_exists($middleware)) {
-                $middleware = new Raw($autowire->compileCall([$middleware, 'process']));
+                $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
             } else {
-                $middleware = new Raw($autowire->compileCall($middleware));
+                $middleware = new ExportableRaw($autowire->compileCall($middleware));
             }
             $middlewares[] = $middleware;
         }
 
         $code = '
 static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
-    $middlewares = ' . Exporter::var_export($middlewares, $container) . ';
-    $callback = ' . Exporter::var_export(new Raw($autowire->compileCall($this->callback)), $container) . ';
+    $middlewares = ' . $exporter->export($middlewares) . ';
+    $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
     return (new \\' . CachedRouteHandler::class . '($container))->handle($request, $middlewares, $callback, $vars);
 }';
         return $code;

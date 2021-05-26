@@ -3,7 +3,6 @@
 namespace Fas\Routing;
 
 use Fas\DI\Autowire;
-use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -44,5 +43,4 @@ class RouteHandler implements RouteHandlerInterface
     {
         return $this->autowire->call($handler, $args);
     }
-
 }

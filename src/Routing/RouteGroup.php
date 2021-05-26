@@ -3,16 +3,19 @@
 namespace Fas\Routing;
 
 use FastRoute\RouteCollector;
+use Psr\Container\ContainerInterface;
 
 class RouteGroup
 {
+    private ?ContainerInterface $container;
     private RouteCollector $routeCollector;
     private ?RouteGroup $parent = null;
     private array $middlewares = [];
 
-    public function __construct(?RouteGroup $parent = null)
+    public function __construct(?RouteGroup $parent = null, ?ContainerInterface $container)
     {
-        $this->routeCollector = $parent ? $parent->routeCollector : new \FastRoute\RouteCollector(new \FastRoute\RouteParser\Std, new \FastRoute\DataGenerator\GroupCountBased);
+        $this->container = $container;
+        $this->routeCollector = $parent ? $parent->routeCollector : new RouteCollector(new \FastRoute\RouteParser\Std(), new \FastRoute\DataGenerator\GroupCountBased());
         $this->parent = $parent;
     }
 
@@ -25,7 +28,7 @@ class RouteGroup
 
     public function group(callable $callback = null): RouteGroup
     {
-        $r = new RouteGroup($this);
+        $r = new RouteGroup($this, $this->container);
         if ($callback) {
             $callback($r);
         }
@@ -38,6 +41,11 @@ class RouteGroup
         return $this;
     }
 
+    public function getContainer(): ?ContainerInterface
+    {
+        return $this->container;
+    }
+
     public function getMiddlewares(): array
     {
         return $this->parent ? array_merge($this->parent->getMiddlewares(), $this->middlewares) : $this->middlewares;
@@ -47,5 +55,4 @@ class RouteGroup
     {
         return $this->routeCollector->getData();
     }
-
 }

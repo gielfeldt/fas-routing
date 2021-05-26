@@ -6,7 +6,6 @@ use Fas\DI\Autowire;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class CachedRouteHandler implements RouteHandlerInterface
@@ -35,5 +34,4 @@ class CachedRouteHandler implements RouteHandlerInterface
     {
         return $handler($args, $this->container);
     }
-
 }
