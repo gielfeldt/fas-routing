@@ -26,13 +26,9 @@ class RouteGroup
         return $r;
     }
 
-    public function group(callable $callback = null): RouteGroup
+    public function group(): RouteGroup
     {
-        $r = new RouteGroup($this, $this->container);
-        if ($callback) {
-            $callback($r);
-        }
-        return $r;
+        return new RouteGroup($this, $this->container);
     }
 
     public function middleware($middleware): RouteGroup

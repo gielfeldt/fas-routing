@@ -29,11 +29,6 @@ class Route implements ExportableInterface
         return $this;
     }
 
-    public function getCallback()
-    {
-        return $this->callback;
-    }
-
     public function getMiddlewares(): array
     {
         return $this->routeGroup ? array_merge($this->routeGroup->getMiddlewares(), $this->middlewares) : $this->middlewares;
@@ -50,15 +45,13 @@ class Route implements ExportableInterface
         $autowire = new Autowire($container);
         $middlewares = [];
         foreach ($this->getMiddlewares() as $middleware) {
-            if (is_string($middleware) && $container && $container->has($middleware)) {
-                $instance = $container->get($middleware);
+            if (is_string($middleware) && $autowire->getContainer()->has($middleware)) {
+                $instance = $autowire->getContainer()->get($middleware);
                 if ($instance instanceof MiddlewareInterface) {
                     $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
                 } elseif (is_callable($instance)) {
                     $middleware = new ExportableRaw($autowire->compileCall($middleware));
                 }
-            } elseif (is_string($middleware) && !$container && class_exists($middleware)) {
-                $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
             } else {
                 $middleware = new ExportableRaw($autowire->compileCall($middleware));
             }

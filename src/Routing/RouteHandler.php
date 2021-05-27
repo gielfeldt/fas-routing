@@ -11,13 +11,13 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class RouteHandler implements RouteHandlerInterface
 {
-    private ?ContainerInterface $container;
+    private ContainerInterface $container;
     private ?Autowire $autowire;
 
     public function __construct(?ContainerInterface $container = null)
     {
-        $this->container = $container;
         $this->autowire = new Autowire($container);
+        $this->container = $this->autowire->getContainer();
     }
 
     public function handle(ServerRequestInterface $request, array $middlewares, $handler, array $args): ResponseInterface
@@ -28,10 +28,8 @@ class RouteHandler implements RouteHandlerInterface
 
     public function callMiddleware($middleware, ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (is_string($middleware) && $this->container && $this->container->has($middleware)) {
+        if (is_string($middleware) && $this->container->has($middleware)) {
             $middleware = $this->container->get($middleware);
-        } elseif (is_string($middleware) && class_exists($middleware)) {
-            $middleware = $this->autowire->new($middleware);
         }
         if ($middleware instanceof MiddlewareInterface) {
             return $middleware->process($request, $handler);

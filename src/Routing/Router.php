@@ -44,9 +44,9 @@ class Router
         return $this->routeGroup->map($httpMethod, $route, $handler);
     }
 
-    public function group(callable $callback = null): RouteGroup
+    public function group(): RouteGroup
     {
-        return $this->routeGroup->group($callback);
+        return $this->routeGroup->group();
     }
 
     public function middleware($middleware): RouteGroup
