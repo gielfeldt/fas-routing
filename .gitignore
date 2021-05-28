@@ -1,7 +1,7 @@
 /vendor/
 
 /coverage/*
-/!coverage/.gitkeep
+!/coverage/.gitkeep
 
 /.vscode/
 
