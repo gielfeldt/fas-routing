@@ -181,8 +181,8 @@ composer require laminas/laminas-httphandlerrunner
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\ErrorResponse;
 use Fas\DI\Container;
+use Fas\Routing\ErrorResponse;
 use Fas\Routing\Router;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
