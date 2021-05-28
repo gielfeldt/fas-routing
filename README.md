@@ -163,3 +163,117 @@ $request = ServerRequestFactory::fromGlobals();
 $response = $router->handle($request);
 (new SapiEmitter)->emit($response);
 ```
+
+
+# Cookbook
+## Separated container and router creation with error response
+
+Requires some laminas libs (or other psr factories and a response emitter)
+
+```bash
+composer require laminas/laminas-diactoros
+composer require laminas/laminas-httphandlerrunner
+```
+
+/app/public/index.php:
+```php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use App\ErrorResponse;
+use Fas\DI\Container;
+use Fas\Routing\Router;
+use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+
+try {
+    $container = Container::load('/app/container.cache.php') ?? require __DIR__ . '/../src/container.php';
+    $container->useProxyCache('/app/proxy.cache');
+
+    $router = Router::load('/app/router.cache.php', $container) ?? require __DIR__ . '/../src/router.php';
+
+    // Handle incoming request
+    $request = ServerRequestFactory::fromGlobals();
+    $response = $router->handle($request);
+} catch (Throwable $e) {
+    $response = (new ErrorResponse(new ResponseFactory))->createResponse($e);
+} finally {
+    (new SapiEmitter)->emit($response);
+}
+
+```
+
+/app/src/container.php:
+```php
+<?php
+
+use Fas\DI\Container;
+use Laminas\Diactoros\RequestFactory;
+use Laminas\Diactoros\ResponseFactory;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+
+$container = new Container;
+
+$container->singleton(ResponseFactoryInterface::class, ResponseFactory::class);
+$container->singleton(RequestFactoryInterface::class, RequestFactory::class);
+
+return $container;
+```
+
+/app/src/router.php:
+```php
+<?php
+
+use Fas\Routing\Router;
+use Psr\Http\Message\ResponseFactoryInterface;
+
+$router = new Router($container);
+
+$router->map('GET', '/hello[/{name}]', function (ResponseFactoryInterface $responseFactory, $name = 'world') {
+    $response = $responseFactory->createResponse(200);
+    $response->getBody()->write("Hello: $name!");
+    return $response;
+});
+
+return $router;
+```
+
+/app/bin/compile.php
+```php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+// Build container
+$container = require __DIR__ . '/../container.php';
+@mkdir('/app/proxy.cache', 0777, true);
+$proxies = $container->buildProxyCache('/app/proxy.cache');
+print "-----------------\nBuilt " . count($proxies) . " proxies\n-----------------\n" . implode("\n", $proxies) . "\n-----------------\n";
+$entries = $container->save('/app/container.cache.php');
+print "-----------------\nBuilt " . count($entries) . " entries\n-----------------\n" . implode("\n", $entries) . "\n-----------------\n";
+
+// Build routes
+$router = require __DIR__ . '/../router.php';
+$router->save('/app/router.cache.php');
+```
+
+```bash
+curl -i http://localhost/hello/there
+```
+
+```
+HTTP/1.1 200 OK
+Date: Fri, 27 May 2021 23:56:30 GMT
+Server: Apache/2.4.38 (Debian)
+X-Powered-By: PHP/8.0.6
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET
+Access-Control-Allow-Headers: x-requested-with, authorization, accept, accept-encoding
+Content-Length: 13
+Content-Type: text/html; charset=UTF-8
+
+Hello: there!
+```

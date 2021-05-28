@@ -78,6 +78,9 @@ class Router
                     throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
                 }
         }
+        // Ignore extra defensive coding coverage
+        // @codeCoverageIgnoreStart
         throw new HttpException(500, "No route info found");
+        // @codeCoverageIgnoreEnd
     }
 }
