@@ -1,3 +1,17 @@
+![Build Status](https://github.com/gielfeldt/fas-routing/actions/workflows/php.yml/badge.svg)
+![Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gielfeldt/e9c4f6129cef70b1a3c998fe2c773aaf/raw/fas-routing__main.json)
+
+![Latest Stable Version](https://poser.pugx.org/fas/routing/v/stable.svg)
+![Latest Unstable Version](https://poser.pugx.org/fas/routing/v/unstable.svg)
+![License](https://poser.pugx.org/fas/routing/license.svg)
+![Total Downloads](https://poser.pugx.org/fas/routing/downloads.svg)
+
+
+# Installation
+
+```bash
+composer require fas/routing
+```
 
 
 # Usage
