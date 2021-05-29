@@ -1,9 +1,9 @@
-![Build Status](https://github.com/gielfeldt/fas-routing/actions/workflows/test.yml/badge.svg)
+[![Build Status](https://github.com/gielfeldt/fas-routing/actions/workflows/test.yml/badge.svg)][4]
 ![Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gielfeldt/0f0d97def8e970cfb455e528c703c506/raw/fas-routing__main.json)
 
-![Latest Stable Version](https://poser.pugx.org/fas/routing/v/stable.svg)
-![Latest Unstable Version](https://poser.pugx.org/fas/routing/v/unstable.svg)
-![License](https://poser.pugx.org/fas/routing/license.svg)
+[![Latest Stable Version](https://poser.pugx.org/fas/routing/v/stable.svg)][1]
+[![Latest Unstable Version](https://poser.pugx.org/fas/routing/v/unstable.svg)][2]
+[![License](https://poser.pugx.org/fas/routing/license.svg)][3]
 ![Total Downloads](https://poser.pugx.org/fas/routing/downloads.svg)
 
 
@@ -291,3 +291,8 @@ Content-Type: text/html; charset=UTF-8
 
 Hello: there!
 ```
+
+[1]:  https://packagist.org/packages/fas/routing
+[2]:  https://packagist.org/packages/fas/routing#dev-main
+[3]:  https://github.com/gielfeldt/fas-routing/blob/main/LICENSE.md
+[4]:  https://github.com/gielfeldt/fas-routing/actions/workflows/test.yml
