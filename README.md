@@ -1,4 +1,4 @@
-![Build Status](https://github.com/gielfeldt/fas-routing/actions/workflows/php.yml/badge.svg)
+![Build Status](https://github.com/gielfeldt/fas-routing/actions/workflows/test.yml/badge.svg)
 ![Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gielfeldt/0f0d97def8e970cfb455e528c703c506/raw/fas-routing__main.json)
 
 ![Latest Stable Version](https://poser.pugx.org/fas/routing/v/stable.svg)
