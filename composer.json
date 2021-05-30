@@ -20,7 +20,7 @@
     ],
     "provide": {
         "psr/http-server-handler-implementation": "^1.0",
-        "psr/http-server-middleware-implementatin": "^1.0"
+        "psr/http-server-middleware-implementation": "^1.0"
     },
     "require": {
         "php": ">=7.4.0",
