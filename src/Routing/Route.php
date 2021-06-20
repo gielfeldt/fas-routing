@@ -64,15 +64,25 @@ class Route implements ExportableInterface, RequestHandlerInterface
             $middlewares[] = $middleware;
         }
 
-        $code = '
+        if (!empty($middlewares)) {
+
+            $code = '
 static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
     $middlewares = ' . $exporter->export($middlewares) . ';
     $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
     $middleware = new \\' . CachedMiddleware::class . '($container, $middlewares);
-
     $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $middleware->process($request, $handler);
 }';
+        } else {
+            $code = '
+static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
+    $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
+    $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
+    return $handler->handle($request);
+}';
+
+        }
         return $code;
     }
 }
