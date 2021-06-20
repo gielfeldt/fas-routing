@@ -24,7 +24,7 @@
     },
     "require": {
         "php": ">=7.4.0",
-        "fas/di": "^0.1",
+        "fas/di": "dev-refactor",
         "fas/exportable": "^0.1",
         "psr/http-message": "^1.0",
         "psr/http-server-middleware": "^1.0",
