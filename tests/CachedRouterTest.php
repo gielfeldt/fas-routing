@@ -2,7 +2,6 @@
 
 namespace Fas\Routing\Tests;
 
-use BadMethodCallException;
 use Exception;
 use Fas\Routing\HttpException;
 use Fas\Routing\Router;
@@ -203,42 +202,6 @@ class CachedRouterTest extends TestCase
         $response = $router->handle($request);
 
         $this->assertEquals("5", (string) $response->getBody());
-    }
-
-    public function testCannotMapOnCachedRouter()
-    {
-        $router = new Router();
-        $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
-        $router->save($filename);
-        $router = Router::load($filename);
-        unlink($filename);
-
-        $this->expectException(BadMethodCallException::class);
-        $router->map('GET', '/somepath', function () {});
-    }
-
-    public function testCannotGroupOnCachedRouter()
-    {
-        $router = new Router();
-        $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
-        $router->save($filename);
-        $router = Router::load($filename);
-        unlink($filename);
-
-        $this->expectException(BadMethodCallException::class);
-        $router->group();
-    }
-
-    public function testCannotMiddlewareOnCachedRouter()
-    {
-        $router = new Router();
-        $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
-        $router->save($filename);
-        $router = Router::load($filename);
-        unlink($filename);
-
-        $this->expectException(BadMethodCallException::class);
-        $router->middleware(TestMiddleware::class);
     }
 
     public function testMissingCacheReturnsNull()

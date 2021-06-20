@@ -9,14 +9,13 @@ class RouteGroup
 {
     private ?ContainerInterface $container;
     private RouteCollector $routeCollector;
-    private ?RouteGroup $parent = null;
-    private array $middlewares = [];
+    private Middleware $middleware;
 
     public function __construct(?RouteGroup $parent = null, ?ContainerInterface $container)
     {
         $this->container = $container;
         $this->routeCollector = $parent ? $parent->routeCollector : new RouteCollector(new \FastRoute\RouteParser\Std(), new \FastRoute\DataGenerator\GroupCountBased());
-        $this->parent = $parent;
+        $this->middleware = new Middleware($container, $parent ? $parent->getMiddleware() : null);
     }
 
     public function map($httpMethod, $route, $handler): Route
@@ -33,7 +32,7 @@ class RouteGroup
 
     public function middleware($middleware): RouteGroup
     {
-        $this->middlewares[] = $middleware;
+        $this->middleware->add($middleware);
         return $this;
     }
 
@@ -42,9 +41,9 @@ class RouteGroup
         return $this->container;
     }
 
-    public function getMiddlewares(): array
+    public function getMiddleware(): Middleware
     {
-        return $this->parent ? array_merge($this->parent->getMiddlewares(), $this->middlewares) : $this->middlewares;
+        return $this->middleware;
     }
 
     public function getData()

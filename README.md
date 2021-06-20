@@ -80,6 +80,7 @@ $response = $router->handle($request);
 
 ## Middlewares
 
+Middlewares attached to `Router` are always run, even if the requested route does not exist.
 ```php
 <?php
 
@@ -103,6 +104,8 @@ $router->middleware($some_object_that_is_invokable);
 ## Groups
 Groups can be created for attaching middlewares to multiple routes.
 There's no prefix mechanism available.
+
+Middlewares attached to groups are only run, if the requested route exists.
 
 ```php
 <?php

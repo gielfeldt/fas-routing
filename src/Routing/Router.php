@@ -2,40 +2,47 @@
 
 namespace Fas\Routing;
 
+use Fas\DI\Autowire;
+use Fas\Exportable\ExportableInterface;
+use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
 use FastRoute\Dispatcher\GroupCountBased;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Throwable;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class Router
+class Router implements ExportableInterface, RequestHandlerInterface
 {
     private ?ContainerInterface $container;
     private RouteGroup $routeGroup;
+
+    private Middleware $middleware;
 
     public function __construct(?ContainerInterface $container = null, ?RouteGroup $routeGroup = null)
     {
         $this->container = $container;
         $this->routeGroup = $routeGroup ?? new RouteGroup(null, $container);
+        $this->middleware = new Middleware($container);
     }
 
-    public static function load($filename, ?ContainerInterface $container = null): ?Router
+    public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
     {
-        $dispatchData = @include $filename;
-        if (!is_array($dispatchData)) {
+        $data = @include $filename;
+        if (!is_array($data)) {
             return null;
         }
-        $router = new Router($container, new CachedRouteGroup($dispatchData));
+        $router = new CachedRouter($container, $data);
         return $router;
     }
 
     public function save($filename): void
     {
-        $data = $this->routeGroup->getData();
         $tempfile = tempnam(dirname($filename), 'routegroup');
         $exporter = new Exporter();
-        file_put_contents($tempfile, '<?php return ' . $exporter->export($data) . ';');
+        $exported = $exporter->export($this);
+        file_put_contents($tempfile, '<?php return ' . $exported . ';');
         rename($tempfile, $filename);
     }
 
@@ -49,38 +56,41 @@ class Router
         return $this->routeGroup->group();
     }
 
-    public function middleware($middleware): RouteGroup
+    public function middleware($middleware): Router
     {
-        return $this->routeGroup->middleware($middleware);
+        $this->middleware->add($middleware);
+        return $this;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $this->dispatcher = $this->dispatcher ?? new GroupCountBased($this->routeGroup->getData());
-
-        $httpMethod = $request->getMethod();
-        $path = $request->getUri()->getPath();
-
-        $routeInfo = $this->dispatcher->dispatch($httpMethod, $path);
-        switch ($routeInfo[0]) {
-            case \FastRoute\Dispatcher::NOT_FOUND:
-                throw new HttpException(404, "Not found ($path)");
-            case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                $allowedMethods = $routeInfo[1];
-                $message = "allowed methods: " . implode(',', $allowedMethods);
-                throw new HttpException(405, $message);
-            case \FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
-                try {
-                    return $handler($request, $vars, $this->container);
-                } catch (Throwable $e) {
-                    throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
-                }
-        }
-        // Ignore extra defensive coding coverage
-        // @codeCoverageIgnoreStart
-        throw new HttpException(500, "No route info found");
-        // @codeCoverageIgnoreEnd
+        return $this->middleware->process($request, new RouterHandler(new GroupCountBased($this->routeGroup->getData())));
     }
+
+    public function exportable(Exporter $exporter, $level = 0): string
+    {
+        $container = $this->container;
+        $autowire = new Autowire($container);
+        $middlewares = [];
+        foreach ($this->middleware->getMiddlewares() as $middleware) {
+            if (is_string($middleware) && $autowire->getContainer()->has($middleware)) {
+                $instance = $autowire->getContainer()->get($middleware);
+                if ($instance instanceof MiddlewareInterface) {
+                    $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
+                } elseif (is_callable($instance)) {
+                    $middleware = new ExportableRaw($autowire->compileCall($middleware));
+                }
+            } else {
+                $middleware = new ExportableRaw($autowire->compileCall($middleware));
+            }
+            $middlewares[] = $middleware;
+        }
+
+        $data = $this->routeGroup->getData();
+        return $exporter->export([
+            $data,
+            $middlewares,
+        ]);
+    }
+
 }
