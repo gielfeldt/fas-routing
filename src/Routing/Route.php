@@ -65,7 +65,6 @@ class Route implements ExportableInterface, RequestHandlerInterface
         }
 
         if (!empty($middlewares)) {
-
             $code = '
 static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
     $middlewares = ' . $exporter->export($middlewares) . ';
@@ -81,7 +80,6 @@ static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $v
     $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $handler->handle($request);
 }';
-
         }
         return $code;
     }

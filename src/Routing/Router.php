@@ -92,5 +92,4 @@ class Router implements ExportableInterface, RequestHandlerInterface
             $middlewares,
         ]);
     }
-
 }
