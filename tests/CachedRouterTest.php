@@ -33,7 +33,6 @@ class CachedRouterTest extends TestCase
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
-        print file_get_contents($filename);
         $router = Router::load($filename);
         unlink($filename);
 
