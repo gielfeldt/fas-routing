@@ -70,7 +70,7 @@ static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $v
     $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
     $middleware = new \\' . CachedMiddleware::class . '($container, $middlewares);
 
-    $handler = new \\ ' . CachedRequestHandler::class . '($callback, $vars, $container);
+    $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $middleware->process($request, $handler);
 }';
         return $code;
