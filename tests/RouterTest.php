@@ -26,12 +26,12 @@ class RouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/static', function ($str = 'abc') {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($str);
             return $response;
         });
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("abc", (string) $response->getBody());
@@ -41,12 +41,12 @@ class RouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/static/{str}', function ($str = 'abc') {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($str);
             return $response;
         });
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static/testdyn');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static/testdyn');
         $response = $router->handle($request);
 
         $this->assertEquals("testdyn", (string) $response->getBody());
@@ -57,7 +57,7 @@ class RouterTest extends TestCase
         $router = new Router();
         $group = $router->group();
         $route = $group->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($request->getAttribute('middleware'));
             return $response;
         });
@@ -69,7 +69,7 @@ class RouterTest extends TestCase
         $router->middleware($this->middlewareAdder("route1"));
         $router->middleware($this->middlewareAdder("route2"));
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals(".route1.route2.route3.route4.route5.route6", (string) $response->getBody());
@@ -79,12 +79,12 @@ class RouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/only-get', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($request->getAttribute('middleware'));
             return $response;
         });
 
-        $request = (new Psr17Factory)->createServerRequest('POST', '/only-get');
+        $request = (new Psr17Factory())->createServerRequest('POST', '/only-get');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(405);
@@ -95,7 +95,7 @@ class RouterTest extends TestCase
     {
         $router = new Router();
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(404);
@@ -109,7 +109,7 @@ class RouterTest extends TestCase
             throw new Exception('failed', 123);
         });
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/fail');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/fail');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(500);
@@ -117,11 +117,11 @@ class RouterTest extends TestCase
         $router->handle($request);
     }
 
-    public function testCanAutowireMiddlewares()
+    public function testCanAutowireMiddlewaresOnRouter()
     {
         $router = new Router();
         $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write((string) $request->getAttribute('middleware'));
             return $response;
         });
@@ -134,7 +134,30 @@ class RouterTest extends TestCase
             return TestMiddleware::staticMiddleware($request, $handler);
         });
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
+        $response = $router->handle($request);
+
+        $this->assertEquals("5", (string) $response->getBody());
+    }
+
+    public function testCanAutowireMiddlewaresOnRoute()
+    {
+        $router = new Router();
+        $route = $router->map('GET', '/static', function ($request) {
+            $response = (new Psr17Factory())->createResponse(200);
+            $response->getBody()->write((string) $request->getAttribute('middleware'));
+            return $response;
+        });
+
+        $route->middleware(TestMiddleware::class);
+        $route->middleware([TestMiddleware::class, 'staticMiddleware']);
+        $route->middleware([TestMiddleware::class, 'methodMiddleware']);
+        $route->middleware(InvokableMiddleware::class);
+        $route->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+            return TestMiddleware::staticMiddleware($request, $handler);
+        });
+
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("5", (string) $response->getBody());
@@ -145,7 +168,7 @@ class RouterTest extends TestCase
         $container = new TestContainer();
         $router = new Router($container);
         $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write((string) $request->getAttribute('middleware'));
             return $response;
         });
@@ -158,7 +181,7 @@ class RouterTest extends TestCase
             return TestMiddleware::staticMiddleware($request, $handler);
         });
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("5", (string) $response->getBody());

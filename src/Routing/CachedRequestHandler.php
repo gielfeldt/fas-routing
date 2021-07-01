@@ -18,6 +18,6 @@ class CachedRequestHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return ($this->handler)(['request' => $request] + $this->args, $this->container);
+        return ($this->handler)($this->container, ['request' => $request] + $this->args);
     }
 }

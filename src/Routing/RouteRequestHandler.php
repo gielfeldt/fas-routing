@@ -2,7 +2,7 @@
 
 namespace Fas\Routing;
 
-use Fas\DI\Autowire;
+use Fas\Autowire\Autowire;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;

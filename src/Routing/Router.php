@@ -2,7 +2,8 @@
 
 namespace Fas\Routing;
 
-use Fas\DI\Autowire;
+use Fas\Autowire\Autowire;
+use Fas\Autowire\Container;
 use Fas\Exportable\ExportableInterface;
 use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
@@ -17,14 +18,15 @@ class Router implements ExportableInterface, RequestHandlerInterface
 {
     private ?ContainerInterface $container;
     private RouteGroup $routeGroup;
-
+    private Autowire $autowire;
     private Middleware $middleware;
 
     public function __construct(?ContainerInterface $container = null, ?RouteGroup $routeGroup = null)
     {
-        $this->container = $container;
-        $this->routeGroup = $routeGroup ?? new RouteGroup(null, $container);
-        $this->middleware = new Middleware($container);
+        $this->autowire = new Autowire($container);
+        $this->container = $this->autowire->getContainer();
+        $this->routeGroup = $routeGroup ?? new RouteGroup(null, $this->autowire);
+        $this->middleware = new Middleware($this->autowire);
     }
 
     public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
@@ -69,27 +71,10 @@ class Router implements ExportableInterface, RequestHandlerInterface
 
     public function exportable(Exporter $exporter, $level = 0): string
     {
-        $container = $this->container;
-        $autowire = new Autowire($container);
-        $middlewares = [];
-        foreach ($this->middleware->getMiddlewares() as $middleware) {
-            if (is_string($middleware) && $autowire->getContainer()->has($middleware)) {
-                $instance = $autowire->getContainer()->get($middleware);
-                if ($instance instanceof MiddlewareInterface) {
-                    $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
-                } elseif (is_callable($instance)) {
-                    $middleware = new ExportableRaw($autowire->compileCall($middleware));
-                }
-            } else {
-                $middleware = new ExportableRaw($autowire->compileCall($middleware));
-            }
-            $middlewares[] = $middleware;
-        }
-
         $data = $this->routeGroup->getData();
         return $exporter->export([
             $data,
-            $middlewares,
+            $this->middleware,
         ]);
     }
 }

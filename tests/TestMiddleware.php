@@ -26,5 +26,4 @@ class TestMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('middleware', $middleware + 1);
         return $handler->handle($request);
     }
-
 }

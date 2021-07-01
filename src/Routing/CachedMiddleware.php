@@ -35,6 +35,6 @@ class CachedMiddleware implements MiddlewareInterface, RequestHandlerInterface
         if (empty($middleware)) {
             return $this->handler->handle($request);
         }
-        return $middleware(['request' => $request, 'handler' => $this], $this->container);
+        return $middleware($this->container, ['request' => $request, 'handler' => $this]);
     }
 }
