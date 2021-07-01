@@ -13,5 +13,4 @@ class InvokableMiddleware
     {
         return TestMiddleware::staticMiddleware($request, $handler);
     }
-
 }

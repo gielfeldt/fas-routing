@@ -46,7 +46,5 @@ class CachedRouterHandler implements RequestHandlerInterface
         // @codeCoverageIgnoreStart
         throw new HttpException(500, "No route info found");
         // @codeCoverageIgnoreEnd
-
     }
-
 }

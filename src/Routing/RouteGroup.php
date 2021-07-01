@@ -2,6 +2,7 @@
 
 namespace Fas\Routing;
 
+use Fas\Autowire\Autowire;
 use FastRoute\RouteCollector;
 use Psr\Container\ContainerInterface;
 
@@ -10,12 +11,14 @@ class RouteGroup
     private ?ContainerInterface $container;
     private RouteCollector $routeCollector;
     private Middleware $middleware;
+    private Autowire $autowire;
 
-    public function __construct(?RouteGroup $parent = null, ?ContainerInterface $container)
+    public function __construct(?RouteGroup $parent = null, Autowire $autowire)
     {
-        $this->container = $container;
+        $this->autowire = $autowire;
+        $this->container = $autowire->getContainer();
         $this->routeCollector = $parent ? $parent->routeCollector : new RouteCollector(new \FastRoute\RouteParser\Std(), new \FastRoute\DataGenerator\GroupCountBased());
-        $this->middleware = new Middleware($container, $parent ? $parent->getMiddleware() : null);
+        $this->middleware = new Middleware($autowire, $parent ? $parent->getMiddleware() : null);
     }
 
     public function map($httpMethod, $route, $handler): Route
@@ -27,7 +30,7 @@ class RouteGroup
 
     public function group(): RouteGroup
     {
-        return new RouteGroup($this, $this->container);
+        return new RouteGroup($this, $this->autowire);
     }
 
     public function middleware($middleware): RouteGroup
@@ -49,5 +52,10 @@ class RouteGroup
     public function getData()
     {
         return $this->routeCollector->getData();
+    }
+
+    public function getAutowire(): Autowire
+    {
+        return $this->autowire;
     }
 }

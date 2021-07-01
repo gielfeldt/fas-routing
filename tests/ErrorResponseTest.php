@@ -13,7 +13,7 @@ class ErrorResponseTest extends TestCase
 
     public function testCanUseErrorResponseAsMiddleware()
     {
-        $factory = new Psr17Factory;
+        $factory = new Psr17Factory();
 
         $router = new Router();
         $router->middleware(new ErrorResponse($factory));

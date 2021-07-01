@@ -13,6 +13,6 @@ class TestContainer implements ContainerInterface
 
     public function get(string $id)
     {
-        return new $id;
+        return new $id();
     }
 }

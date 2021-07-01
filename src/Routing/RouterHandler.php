@@ -34,7 +34,6 @@ class RouterHandler implements RequestHandlerInterface
                 try {
                     $route->setArguments($vars);
                     return $route->handle($request);
-                    //return $handler($request, $vars, $this->container);
                 } catch (Throwable $e) {
                     throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
                 }
@@ -43,7 +42,5 @@ class RouterHandler implements RequestHandlerInterface
         // @codeCoverageIgnoreStart
         throw new HttpException(500, "No route info found");
         // @codeCoverageIgnoreEnd
-
     }
-
 }

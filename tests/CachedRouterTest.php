@@ -26,7 +26,7 @@ class CachedRouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/static', function ($str = 'abc') {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($str);
             return $response;
         });
@@ -36,7 +36,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("abc", (string) $response->getBody());
@@ -46,7 +46,7 @@ class CachedRouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/static/{str}', function ($str = 'abc') {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($str);
             return $response;
         });
@@ -56,7 +56,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static/testdyn');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static/testdyn');
         $response = $router->handle($request);
 
         $this->assertEquals("testdyn", (string) $response->getBody());
@@ -67,7 +67,7 @@ class CachedRouterTest extends TestCase
         $router = new Router();
         $group = $router->group();
         $route = $group->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($request->getAttribute('middleware'));
             return $response;
         });
@@ -84,7 +84,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals(".route1.route2.route3.route4.route5.route6", (string) $response->getBody());
@@ -94,7 +94,7 @@ class CachedRouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/only-get', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write($request->getAttribute('middleware'));
             return $response;
         });
@@ -104,7 +104,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('POST', '/only-get');
+        $request = (new Psr17Factory())->createServerRequest('POST', '/only-get');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(405);
@@ -120,7 +120,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(404);
@@ -139,7 +139,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/fail');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/fail');
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(500);
@@ -151,7 +151,7 @@ class CachedRouterTest extends TestCase
     {
         $router = new Router();
         $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write((string) $request->getAttribute('middleware'));
             return $response;
         });
@@ -169,7 +169,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("5", (string) $response->getBody());
@@ -180,7 +180,7 @@ class CachedRouterTest extends TestCase
         $container = new TestContainer();
         $router = new Router($container);
         $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory)->createResponse(200);
+            $response = (new Psr17Factory())->createResponse(200);
             $response->getBody()->write((string) $request->getAttribute('middleware'));
             return $response;
         });
@@ -198,7 +198,7 @@ class CachedRouterTest extends TestCase
         $router = Router::load($filename, $container);
         unlink($filename);
 
-        $request = (new Psr17Factory)->createServerRequest('GET', '/static');
+        $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
 
         $this->assertEquals("5", (string) $response->getBody());
@@ -210,5 +210,4 @@ class CachedRouterTest extends TestCase
 
         $this->assertNull($router);
     }
-
 }
