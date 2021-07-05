@@ -16,7 +16,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class Router implements ExportableInterface, RequestHandlerInterface
 {
-    private ?ContainerInterface $container;
     private RouteGroup $routeGroup;
     private Autowire $autowire;
     private Middleware $middleware;
@@ -39,13 +38,18 @@ class Router implements ExportableInterface, RequestHandlerInterface
         return $router;
     }
 
-    public function save($filename): void
+    public function save($filename, $path = null): void
     {
-        $tempfile = tempnam(dirname($filename), 'routegroup');
+        $path = realpath($path ?? dirname($filename));
+        $this->routeGroup->setCachePath($path);
+        $tempfile = tempnam(dirname($filename), 'fas-routing');
+        @chmod($tempfile, 0666);
         $exporter = new Exporter();
         $exported = $exporter->export($this);
         file_put_contents($tempfile, '<?php return ' . $exported . ';');
+        @chmod($tempfile, 0666);
         rename($tempfile, $filename);
+        @chmod($filename, 0666);
     }
 
     public function map($httpMethod, $route, $handler): Route
@@ -71,10 +75,11 @@ class Router implements ExportableInterface, RequestHandlerInterface
 
     public function exportable(Exporter $exporter, $level = 0): string
     {
-        $data = $this->routeGroup->getData();
-        return $exporter->export([
-            $data,
+        return $exporter->export(
+            [
+            $this->routeGroup,
             $this->middleware,
-        ]);
+            ]
+        );
     }
 }

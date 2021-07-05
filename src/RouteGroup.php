@@ -3,18 +3,22 @@
 namespace Fas\Routing;
 
 use Fas\Autowire\Autowire;
+use Fas\Exportable\ExportableInterface;
+use Fas\Exportable\Exporter;
 use FastRoute\RouteCollector;
 use Psr\Container\ContainerInterface;
 
-class RouteGroup
+class RouteGroup implements ExportableInterface
 {
     private ?ContainerInterface $container;
     private RouteCollector $routeCollector;
     private Middleware $middleware;
     private Autowire $autowire;
+    private ?RouteGroup $parent;
 
     public function __construct(?RouteGroup $parent = null, Autowire $autowire)
     {
+        $this->parent = $parent;
         $this->autowire = $autowire;
         $this->container = $autowire->getContainer();
         $this->routeCollector = $parent ? $parent->routeCollector : new RouteCollector(new \FastRoute\RouteParser\Std(), new \FastRoute\DataGenerator\GroupCountBased());
@@ -57,5 +61,20 @@ class RouteGroup
     public function getAutowire(): Autowire
     {
         return $this->autowire;
+    }
+
+    public function setCachePath(string $path)
+    {
+        $this->cachePath = $path;
+    }
+
+    public function getCachePath(): string
+    {
+        return $this->cachePath ?? $this->parent->getCachePath();
+    }
+
+    public function exportable(Exporter $exporter, $level = 0): string
+    {
+        return $exporter->export($this->routeCollector->getData(), $level);
     }
 }

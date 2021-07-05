@@ -8,7 +8,6 @@ use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class Route implements ExportableInterface, RequestHandlerInterface
@@ -52,7 +51,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $autowire = $this->autowire;
         if (!empty($this->middleware->getMiddlewares())) {
             $code = '
-static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
+{
     $middlewares = ' . $exporter->export($this->middleware) . ';
     $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
     $middleware = new \\' . CachedMiddleware::class . '($container, $middlewares);
@@ -61,12 +60,22 @@ static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $v
 }';
         } else {
             $code = '
-static function (\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) {
+{
     $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
     $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $handler->handle($request);
 }';
         }
-        return $code;
+        $id = hash('sha256', $code);
+        $function = "route_$id";
+        $code = 'function ' . $function . '(\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) ' . $code;
+        $file = $this->routeGroup->getCachePath() . "/fas-routing.route.$id.cache.php";
+        $tempfile = tempnam(dirname($file), 'fas-routing-route');
+        @chmod($tempfile, 0666);
+        file_put_contents($tempfile, "<?php\n$code;\n");
+        @chmod($tempfile, 0666);
+        rename($tempfile, $file);
+        @chmod($file, 0666);
+        return var_export([$file, $function], true);
     }
 }
