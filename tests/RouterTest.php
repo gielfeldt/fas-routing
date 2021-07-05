@@ -25,11 +25,15 @@ class RouterTest extends TestCase
     public function testCanMapStaticGetRoute()
     {
         $router = new Router();
-        $router->map('GET', '/static', function ($str = 'abc') {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($str);
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($str = 'abc') {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($str);
+                return $response;
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
@@ -40,11 +44,15 @@ class RouterTest extends TestCase
     public function testCanMapDynamicGetRoute()
     {
         $router = new Router();
-        $router->map('GET', '/static/{str}', function ($str = 'abc') {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($str);
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static/{str}',
+            function ($str = 'abc') {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($str);
+                return $response;
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/static/testdyn');
         $response = $router->handle($request);
@@ -56,11 +64,15 @@ class RouterTest extends TestCase
     {
         $router = new Router();
         $group = $router->group();
-        $route = $group->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($request->getAttribute('middleware'));
-            return $response;
-        });
+        $route = $group->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $route->middleware($this->middlewareAdder("route5"));
         $route->middleware($this->middlewareAdder("route6"));
@@ -78,11 +90,15 @@ class RouterTest extends TestCase
     public function testWillThrowExceptionIfMethodNotAllowed()
     {
         $router = new Router();
-        $router->map('GET', '/only-get', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/only-get',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('POST', '/only-get');
 
@@ -105,9 +121,13 @@ class RouterTest extends TestCase
     public function testWillThrowExceptionIfHandlerFails()
     {
         $router = new Router();
-        $router->map('GET', '/fail', function ($request) {
-            throw new Exception('failed', 123);
-        });
+        $router->map(
+            'GET',
+            '/fail',
+            function ($request) {
+                throw new Exception('failed', 123);
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/fail');
 
@@ -120,19 +140,25 @@ class RouterTest extends TestCase
     public function testCanAutowireMiddlewaresOnRouter()
     {
         $router = new Router();
-        $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write((string) $request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write((string) $request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
         $router->middleware(InvokableMiddleware::class);
-        $router->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
-            return TestMiddleware::staticMiddleware($request, $handler);
-        });
+        $router->middleware(
+            function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+                return TestMiddleware::staticMiddleware($request, $handler);
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
@@ -143,19 +169,25 @@ class RouterTest extends TestCase
     public function testCanAutowireMiddlewaresOnRoute()
     {
         $router = new Router();
-        $route = $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write((string) $request->getAttribute('middleware'));
-            return $response;
-        });
+        $route = $router->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write((string) $request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $route->middleware(TestMiddleware::class);
         $route->middleware([TestMiddleware::class, 'staticMiddleware']);
         $route->middleware([TestMiddleware::class, 'methodMiddleware']);
         $route->middleware(InvokableMiddleware::class);
-        $route->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
-            return TestMiddleware::staticMiddleware($request, $handler);
-        });
+        $route->middleware(
+            function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+                return TestMiddleware::staticMiddleware($request, $handler);
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);
@@ -167,19 +199,25 @@ class RouterTest extends TestCase
     {
         $container = new TestContainer();
         $router = new Router($container);
-        $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write((string) $request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write((string) $request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
         $router->middleware(InvokableMiddleware::class);
-        $router->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
-            return TestMiddleware::staticMiddleware($request, $handler);
-        });
+        $router->middleware(
+            function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+                return TestMiddleware::staticMiddleware($request, $handler);
+            }
+        );
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/static');
         $response = $router->handle($request);

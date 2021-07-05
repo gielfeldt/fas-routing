@@ -18,9 +18,13 @@ class ErrorResponseTest extends TestCase
         $router = new Router();
         $router->middleware(new ErrorResponse($factory));
 
-        $router->map('GET', '/fail', function () {
-            throw new Exception("I failed");
-        });
+        $router->map(
+            'GET',
+            '/fail',
+            function () {
+                throw new Exception("I failed");
+            }
+        );
 
         $request = $factory->createServerRequest('GET', '/fail');
         $response = $router->handle($request);

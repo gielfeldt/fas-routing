@@ -25,11 +25,15 @@ class CachedRouterTest extends TestCase
     public function testCanMapStaticGetRoute()
     {
         $router = new Router();
-        $router->map('GET', '/static', function ($str = 'abc') {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($str);
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($str = 'abc') {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($str);
+                return $response;
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
@@ -45,11 +49,15 @@ class CachedRouterTest extends TestCase
     public function testCanMapDynamicGetRoute()
     {
         $router = new Router();
-        $router->map('GET', '/static/{str}', function ($str = 'abc') {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($str);
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static/{str}',
+            function ($str = 'abc') {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($str);
+                return $response;
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
@@ -66,11 +74,15 @@ class CachedRouterTest extends TestCase
     {
         $router = new Router();
         $group = $router->group();
-        $route = $group->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($request->getAttribute('middleware'));
-            return $response;
-        });
+        $route = $group->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $route->middleware($this->middlewareAdder("route5"));
         $route->middleware($this->middlewareAdder("route6"));
@@ -93,11 +105,15 @@ class CachedRouterTest extends TestCase
     public function testWillThrowExceptionIfMethodNotAllowed()
     {
         $router = new Router();
-        $router->map('GET', '/only-get', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write($request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/only-get',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write($request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
@@ -130,9 +146,13 @@ class CachedRouterTest extends TestCase
     public function testWillThrowExceptionIfHandlerFails()
     {
         $router = new Router();
-        $router->map('GET', '/fail', function ($request) {
-            throw new Exception('failed', 123);
-        });
+        $router->map(
+            'GET',
+            '/fail',
+            function ($request) {
+                throw new Exception('failed', 123);
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
@@ -150,19 +170,25 @@ class CachedRouterTest extends TestCase
     public function testCanAutowireMiddlewares()
     {
         $router = new Router();
-        $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write((string) $request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write((string) $request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
         $router->middleware(InvokableMiddleware::class);
-        $router->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
-            return TestMiddleware::staticMiddleware($request, $handler);
-        });
+        $router->middleware(
+            function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+                return TestMiddleware::staticMiddleware($request, $handler);
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
@@ -179,19 +205,25 @@ class CachedRouterTest extends TestCase
     {
         $container = new TestContainer();
         $router = new Router($container);
-        $router->map('GET', '/static', function ($request) {
-            $response = (new Psr17Factory())->createResponse(200);
-            $response->getBody()->write((string) $request->getAttribute('middleware'));
-            return $response;
-        });
+        $router->map(
+            'GET',
+            '/static',
+            function ($request) {
+                $response = (new Psr17Factory())->createResponse(200);
+                $response->getBody()->write((string) $request->getAttribute('middleware'));
+                return $response;
+            }
+        );
 
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
         $router->middleware(InvokableMiddleware::class);
-        $router->middleware(function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
-            return TestMiddleware::staticMiddleware($request, $handler);
-        });
+        $router->middleware(
+            function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
+                return TestMiddleware::staticMiddleware($request, $handler);
+            }
+        );
 
         $filename = tempnam(sys_get_temp_dir(), 'fas-routing-test');
         $router->save($filename);
