@@ -67,15 +67,17 @@ class Route implements ExportableInterface, RequestHandlerInterface
 }';
         }
         $id = hash('sha256', $code);
-        $function = "route_$id";
-        $code = 'function ' . $function . '(\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) ' . $code;
-        $file = $this->routeGroup->getCachePath() . "/fas-routing.route.$id.cache.php";
+        $class = "route_$id";
+        $code = 'static function handle(\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) ' . $code;
+        $code = "class $class {\n$code\n}\n";
+        $file = $this->routeGroup->getCachePath() . "/route_$id.php";
         $tempfile = tempnam(dirname($file), 'fas-routing-route');
         @chmod($tempfile, 0666);
-        file_put_contents($tempfile, "<?php\n$code;\n");
+        file_put_contents($tempfile, "<?php\n$code\n");
         @chmod($tempfile, 0666);
         rename($tempfile, $file);
         @chmod($file, 0666);
-        return var_export([$file, $function], true);
+        $this->routeGroup->addPreload($file);
+        return var_export([$file, $class], true);
     }
 }

@@ -24,6 +24,16 @@ class CachedRouter implements RequestHandlerInterface
         $this->middlewares = new CachedMiddleware($this->container, $data[1]);
     }
 
+    public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
+    {
+        $data = @include $filename;
+        if (!is_array($data)) {
+            return null;
+        }
+        $router = new self($container, $data);
+        return $router;
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         return $this->middlewares->process($request, new CachedRouterHandler(new GroupCountBased($this->routeGroupData), $this->container));

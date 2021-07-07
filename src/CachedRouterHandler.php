@@ -34,11 +34,13 @@ class CachedRouterHandler implements RequestHandlerInterface
                 $message = "allowed methods: " . implode(',', $allowedMethods);
                 throw new HttpException(405, $message);
             case \FastRoute\Dispatcher::FOUND:
-                [$file, $function] = $routeInfo[1];
+                [$file, $class] = $routeInfo[1];
                 $vars = $routeInfo[2];
                 try {
-                    include_once $file;
-                    return $function($request, $vars, $this->container);
+                    if (!class_exists($class, false)) {
+                        require_once $file;
+                    }
+                    return $class::handle($request, $vars, $this->container);
                 } catch (Throwable $e) {
                     throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
                 }

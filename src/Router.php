@@ -2,6 +2,8 @@
 
 namespace Fas\Routing;
 
+use Composer\Autoload\ClassLoader;
+use Exception;
 use Fas\Autowire\Autowire;
 use Fas\Autowire\Container;
 use Fas\Exportable\ExportableInterface;
@@ -47,6 +49,58 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $exporter = new Exporter();
         $exported = $exporter->export($this);
         file_put_contents($tempfile, '<?php return ' . $exported . ';');
+        @chmod($tempfile, 0666);
+        rename($tempfile, $filename);
+        @chmod($filename, 0666);
+    }
+
+    public function savePreload(string $filename): void
+    {
+        foreach (get_declared_classes() as $className) {
+            if (strpos($className, 'ComposerAutoloader') === 0) {
+                $classLoader = $className::getLoader();
+                break;
+            }
+        }
+        if (empty($classLoader)) {
+            throw new Exception("Cannot locate class loader");
+        }
+
+        $files = [];
+        $files[] = $classLoader->findFile(\Psr\Container\ContainerInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\MessageInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\ServerRequestInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\RequestInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\ResponseInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\UriInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Message\StreamInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Server\MiddlewareInterface::class);
+        $files[] = $classLoader->findFile(\Psr\Http\Server\RequestHandlerInterface::class);
+        $files[] = $classLoader->findFile(\Fas\Autowire\ReferenceTrackerInterface::class);
+
+        $files[] = $classLoader->findFile(\Fas\Autowire\Autowire::class);
+        $files[] = $classLoader->findFile(\Fas\Autowire\Container::class);
+
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedRequestHandler::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedRouterHandler::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedRouter::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedMiddleware::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\HttpException::class);
+
+        $files[] = $classLoader->findFile(\FastRoute\Dispatcher::class);
+        $files[] = $classLoader->findFile(\FastRoute\Dispatcher\RegexBasedAbstract::class);
+        $files[] = $classLoader->findFile(\FastRoute\Dispatcher\GroupCountBased::class);
+
+        $files = array_merge($files, array_keys($this->routeGroup->getPreload()));
+        ob_start();
+        include __DIR__ . '/preload.template.php';
+        $preload = ob_get_contents();
+        ob_end_clean();
+
+        #$filename = dirname($filename) . '/preload.' . basename($filename);
+        $tempfile = tempnam(dirname($filename), 'fas-routing');
+        @chmod($tempfile, 0666);
+        file_put_contents($tempfile, '<?php ' . $preload);
         @chmod($tempfile, 0666);
         rename($tempfile, $filename);
         @chmod($filename, 0666);

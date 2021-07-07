@@ -15,6 +15,7 @@ class RouteGroup implements ExportableInterface
     private Middleware $middleware;
     private Autowire $autowire;
     private ?RouteGroup $parent;
+    private array $preload = [];
 
     public function __construct(?RouteGroup $parent = null, Autowire $autowire)
     {
@@ -71,6 +72,20 @@ class RouteGroup implements ExportableInterface
     public function getCachePath(): string
     {
         return $this->cachePath ?? $this->parent->getCachePath();
+    }
+
+    public function addPreload(string $filename)
+    {
+        if ($this->parent) {
+            $this->parent->addPreload($filename);
+        } else {
+            $this->preload[$filename] = $filename;
+        }
+    }
+
+    public function getPreload(): array
+    {
+        return $this->preload;
     }
 
     public function exportable(Exporter $exporter, $level = 0): string
