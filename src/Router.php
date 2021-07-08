@@ -40,9 +40,9 @@ class Router implements ExportableInterface, RequestHandlerInterface
         return $router;
     }
 
-    public function save($filename, $path = null): void
+    public function save($filename, $preload = null): void
     {
-        $path = realpath($path ?? dirname($filename));
+        $path = dirname($filename);
         $this->routeGroup->setCachePath($path);
         $tempfile = tempnam(dirname($filename), 'fas-routing');
         @chmod($tempfile, 0666);
@@ -52,9 +52,13 @@ class Router implements ExportableInterface, RequestHandlerInterface
         @chmod($tempfile, 0666);
         rename($tempfile, $filename);
         @chmod($filename, 0666);
+
+        if ($preload) {
+            $this->savePreload($preload);
+        }
     }
 
-    public function savePreload(string $filename): void
+    private function savePreload(string $filename): void
     {
         foreach (get_declared_classes() as $className) {
             if (strpos($className, 'ComposerAutoloader') === 0) {
@@ -97,7 +101,6 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $preload = ob_get_contents();
         ob_end_clean();
 
-        #$filename = dirname($filename) . '/preload.' . basename($filename);
         $tempfile = tempnam(dirname($filename), 'fas-routing');
         @chmod($tempfile, 0666);
         file_put_contents($tempfile, '<?php ' . $preload);
