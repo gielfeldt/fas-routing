@@ -96,7 +96,7 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $files = array_merge($files, $classFiles);
         $preload = "<?php\n";
         foreach ($files as $file) {
-            $preload .= 'opcache_compile_file(' . var_export(realpath($file)) . ");\n";
+            $preload .= 'opcache_compile_file(' . var_export(realpath($file), true) . ");\n";
         }
 
         $tempfile = tempnam(dirname($filename), 'fas-routing');
