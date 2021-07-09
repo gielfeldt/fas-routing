@@ -87,6 +87,7 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouterHandler::class);
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouter::class);
         $files[] = $classLoader->findFile(\Fas\Routing\CachedMiddleware::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedRoute::class);
         $files[] = $classLoader->findFile(\Fas\Routing\HttpException::class);
 
         $files[] = $classLoader->findFile(\FastRoute\Dispatcher::class);

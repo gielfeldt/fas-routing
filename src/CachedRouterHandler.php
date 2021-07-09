@@ -40,7 +40,7 @@ class CachedRouterHandler implements RequestHandlerInterface
                     if (!class_exists($class, false)) {
                         require_once $file;
                     }
-                    return $class::handle($request, $vars, $this->container);
+                    return (new $class($this->container, $vars))->request($request);
                 } catch (Throwable $e) {
                     throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
                 }

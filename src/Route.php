@@ -6,6 +6,7 @@ use Exception;
 use Fas\Autowire\Autowire;
 use Fas\Exportable\ExportableInterface;
 use Fas\Exportable\Exporter;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -49,27 +50,29 @@ class Route implements ExportableInterface, RequestHandlerInterface
     public function exportable(Exporter $exporter, $level = 0): string
     {
         $autowire = $this->autowire;
-        if (!empty($this->middleware->getMiddlewares())) {
-            $code = '
-{
-    $middlewares = ' . $exporter->export($this->middleware) . ';
-    $callback = ' . $exporter->export($autowire->compileCall($this->callback)) . ';
-    $middleware = new \\' . CachedMiddleware::class . '($container, $middlewares);
-    $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
-    return $middleware->process($request, $handler);
-}';
+        $compiled = $autowire->compileCall($this->callback);
+
+        $handler = $exporter->export($compiled);
+        $middlewares = $exporter->export($this->middleware);
+
+        $request = "function request(\\" . ServerRequestInterface::class . '$request): ResponseInterface { ';
+        if (empty($this->middleware->getMiddlewares())) {
+            $request .= 'return $this->handle($request);';
         } else {
-            $code = '
-{
-    $callback = ' . $exporter->export($autowire->compileCall($this->callback)) . ';
-    $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
-    return $handler->handle($request);
-}';
+            $request .= 'return (new \\Fas\\Routing\\CachedMiddleware($this->container, self::MIDDLEWARES))->process($request, $this);';
         }
-        $id = hash('sha256', $code);
+        $request .= " }\n";
+
+        $id = hash('sha256', $handler . $middlewares);
         $class = "route_$id";
-        $code = 'static function handle(\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) ' . $code;
-        $code = "class $class {\n$code\n}\n";
+        $code = "<?php\n";
+        $code .= "use " . ResponseInterface::class . ";\n";
+        $code .= "class $class extends \Fas\Routing\CachedRoute {\n";
+        $code .= "    const MIDDLEWARES = $middlewares;\n";
+        $code .= "    $request\n";
+        $code .= "    function handle(\\" . ServerRequestInterface::class . '$request): ResponseInterface { return (' . $handler . ')($this->container, [\'request\' => $request] + $this->args); }';
+        $code .= "}\n";
+
         $cachePath = $exporter->getAttribute('fas-routing-cache-path');
         if (empty($cachePath)) {
             throw new Exception("Could not locate cache path");
@@ -77,7 +80,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $file = $cachePath . "/route_$id.php";
         $tempfile = tempnam(dirname($file), 'fas-routing-route');
         @chmod($tempfile, 0666);
-        file_put_contents($tempfile, "<?php\n$code\n");
+        file_put_contents($tempfile, $code);
         @chmod($tempfile, 0666);
         rename($tempfile, $file);
         @chmod($file, 0666);
