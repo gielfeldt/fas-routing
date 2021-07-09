@@ -18,11 +18,6 @@ abstract class CachedRoute implements RequestHandlerInterface
         $this->args = $args;
     }
 
-    function handle(ServerRequestInterface $request): ResponseInterface
-    {
-        return $this->_handle($this->container, ['request' => $request] + $this->args);
-    }
-
+    abstract function handle(ServerRequestInterface $request): ResponseInterface;
     abstract function request(ServerRequestInterface $request): ResponseInterface;
-    abstract static function _handle(ContainerInterface $container, array $args = []): ResponseInterface;
 }
