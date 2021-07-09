@@ -2,9 +2,9 @@
 
 namespace Fas\Routing;
 
+use Exception;
 use Fas\Autowire\Autowire;
 use Fas\Exportable\ExportableInterface;
-use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -71,14 +71,36 @@ class Middleware implements MiddlewareInterface, RequestHandlerInterface, Export
             if (is_string($middleware) && $autowire->getContainer()->has($middleware)) {
                 $instance = $autowire->getContainer()->get($middleware);
                 if ($instance instanceof MiddlewareInterface) {
-                    $middleware = new ExportableRaw($autowire->compileCall([$middleware, 'process']));
+                    $middleware = $autowire->compileCall([$middleware, 'process']);
                 } elseif (is_callable($instance)) {
-                    $middleware = new ExportableRaw($autowire->compileCall($middleware));
+                    $middleware = $autowire->compileCall($middleware);
                 }
             } else {
-                $middleware = new ExportableRaw($autowire->compileCall($middleware));
+                $middleware = $autowire->compileCall($middleware);
             }
-            $middlewares[] = $middleware;
+
+
+            $code = (string) $middleware;
+            $id = hash('sha256', $code);
+            $class = "middleware_$id";
+            $code = 'static function handle(\\Psr\\Container\\ContainerInterface $container, array $args = []) { return (' . $code . ')($container, $args); }';
+            $code = "class $class {\n$code\n}\n";
+            $cachePath = $exporter->getAttribute('fas-routing-cache-path');
+            if (empty($cachePath)) {
+                throw new Exception("Could not locate cache path");
+            }
+            $file = $cachePath . "/middleware_$id.php";
+            $tempfile = tempnam(dirname($file), 'fas-routing-route');
+            @chmod($tempfile, 0666);
+            file_put_contents($tempfile, "<?php\n$code\n");
+            @chmod($tempfile, 0666);
+            rename($tempfile, $file);
+            @chmod($file, 0666);
+            $preload = $exporter->getAttribute('fas-routing-preload', []);
+            $preload[$file] = $file;
+            $exporter->setAttribute('fas-routing-preload', $preload);
+
+            $middlewares[] = [realpath($file), $class];
         }
 
         return $exporter->export($middlewares);

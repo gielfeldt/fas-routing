@@ -2,18 +2,14 @@
 
 namespace Fas\Routing;
 
-use Composer\Autoload\ClassLoader;
 use Exception;
 use Fas\Autowire\Autowire;
-use Fas\Autowire\Container;
 use Fas\Exportable\ExportableInterface;
-use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
 use FastRoute\Dispatcher\GroupCountBased;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class Router implements ExportableInterface, RequestHandlerInterface
@@ -98,14 +94,14 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $files[] = $classLoader->findFile(\FastRoute\Dispatcher\GroupCountBased::class);
 
         $files = array_merge($files, $classFiles);
-        ob_start();
-        include __DIR__ . '/preload.template.php';
-        $preload = ob_get_contents();
-        ob_end_clean();
+        $preload = "<?php\n";
+        foreach ($files as $file) {
+            $preload .= 'opcache_compile_file(' . var_export(realpath($file)) . ");\n";
+        }
 
         $tempfile = tempnam(dirname($filename), 'fas-routing');
         @chmod($tempfile, 0666);
-        file_put_contents($tempfile, '<?php ' . $preload);
+        file_put_contents($tempfile, $preload);
         @chmod($tempfile, 0666);
         rename($tempfile, $filename);
         @chmod($filename, 0666);
@@ -136,8 +132,8 @@ class Router implements ExportableInterface, RequestHandlerInterface
     {
         return $exporter->export(
             [
-            $this->routeGroup,
-            $this->middleware,
+                $this->routeGroup,
+                $this->middleware,
             ]
         );
     }

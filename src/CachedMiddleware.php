@@ -35,6 +35,10 @@ class CachedMiddleware implements MiddlewareInterface, RequestHandlerInterface
         if (empty($middleware)) {
             return $this->handler->handle($request);
         }
-        return $middleware($this->container, ['request' => $request, 'handler' => $this]);
+        [$file, $class] = $middleware;
+        if (!class_exists($class, false)) {
+            require_once $file;
+        }
+        return $class::handle($this->container, ['request' => $request, 'handler' => $this]);
     }
 }

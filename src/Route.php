@@ -5,7 +5,6 @@ namespace Fas\Routing;
 use Exception;
 use Fas\Autowire\Autowire;
 use Fas\Exportable\ExportableInterface;
-use Fas\Exportable\ExportableRaw;
 use Fas\Exportable\Exporter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -54,7 +53,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
             $code = '
 {
     $middlewares = ' . $exporter->export($this->middleware) . ';
-    $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
+    $callback = ' . $exporter->export($autowire->compileCall($this->callback)) . ';
     $middleware = new \\' . CachedMiddleware::class . '($container, $middlewares);
     $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $middleware->process($request, $handler);
@@ -62,7 +61,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
         } else {
             $code = '
 {
-    $callback = ' . $exporter->export(new ExportableRaw($autowire->compileCall($this->callback))) . ';
+    $callback = ' . $exporter->export($autowire->compileCall($this->callback)) . ';
     $handler = new \\' . CachedRequestHandler::class . '($callback, $vars, $container);
     return $handler->handle($request);
 }';
@@ -85,6 +84,6 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $preload = $exporter->getAttribute('fas-routing-preload', []);
         $preload[$file] = $file;
         $exporter->setAttribute('fas-routing-preload', $preload);
-        return var_export([$file, $class], true);
+        return var_export([realpath($file), $class], true);
     }
 }
