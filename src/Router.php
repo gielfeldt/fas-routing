@@ -28,30 +28,48 @@ class Router implements ExportableInterface, RequestHandlerInterface
 
     public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
     {
-        $data = @include $filename;
-        if (!is_array($data)) {
-            return null;
-        }
-        $router = new CachedRouter($container, $data);
-        return $router;
+        return CachedRouter::load($filename, $container);
     }
 
     public function save($filename, $preload = null): void
     {
         $path = dirname($filename);
-        $tempfile = tempnam(dirname($filename), 'fas-routing');
-        @chmod($tempfile, 0666);
         $exporter = new Exporter();
         $exporter->setAttribute('fas-routing-cache-path', $path);
         $exporter->setAttribute('fas-routing-preload', []);
         $exported = $exporter->export($this);
-        file_put_contents($tempfile, '<?php return ' . $exported . ';');
+
+        $className = 'router_' . hash('sha256', $exported);
+        $classFilename = "$path/$className.php";
+
+        $data = null;
+        eval("\$data = $exported;");
+        $routeData = $exporter->export($data[0]);
+        $middlewares = $exporter->export($data[1]);
+
+        $code = "<?php\n";
+        $code .= "class $className extends \\Fas\\Routing\\CachedRouter {\n";
+        $code .= '    protected array $routeGroupData = ' . $routeData . ";\n";
+        $code .= '    protected array $middlewares = ' . $middlewares . ";\n";
+        $code .= "}\n";
+
+        $tempfile = tempnam($path, 'fas-routing');
+        @chmod($tempfile, 0666);
+        file_put_contents($tempfile, $code);
+        @chmod($tempfile, 0666);
+        rename($tempfile, $classFilename);
+        @chmod($classFilename, 0666);
+
+        $tempfile = tempnam($path, 'fas-routing');
+        @chmod($tempfile, 0666);
+        file_put_contents($tempfile, '<?php return ' . var_export([realpath($classFilename), $className], true) . ';');
         @chmod($tempfile, 0666);
         rename($tempfile, $filename);
         @chmod($filename, 0666);
 
         if ($preload) {
             $files = $exporter->getAttribute('fas-routing-preload', []);
+            $files[$classFilename] = $classFilename;
             $this->savePreload($preload, array_keys($files));
         }
     }
@@ -69,35 +87,20 @@ class Router implements ExportableInterface, RequestHandlerInterface
         }
 
         $files = [];
-        $files[] = $classLoader->findFile(\Psr\Container\ContainerInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\MessageInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\ServerRequestInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\RequestInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\ResponseInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\UriInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Message\StreamInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Server\MiddlewareInterface::class);
-        $files[] = $classLoader->findFile(\Psr\Http\Server\RequestHandlerInterface::class);
-        $files[] = $classLoader->findFile(\Fas\Autowire\ReferenceTrackerInterface::class);
+        $files[] = $classLoader->findFile(\FastRoute\Dispatcher\GroupCountBased::class);
+        $files[] = $classLoader->findFile(\FastRoute\Dispatcher::class);
 
         $files[] = $classLoader->findFile(\Fas\Autowire\Autowire::class);
         $files[] = $classLoader->findFile(\Fas\Autowire\Container::class);
 
-        $files[] = $classLoader->findFile(\Fas\Routing\CachedRequestHandler::class);
+        $files[] = $classLoader->findFile(\Fas\Routing\CachedMiddleware::class);
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouterHandler::class);
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouter::class);
-        $files[] = $classLoader->findFile(\Fas\Routing\CachedMiddleware::class);
-        $files[] = $classLoader->findFile(\Fas\Routing\CachedRoute::class);
-        $files[] = $classLoader->findFile(\Fas\Routing\HttpException::class);
-
-        $files[] = $classLoader->findFile(\FastRoute\Dispatcher::class);
-        $files[] = $classLoader->findFile(\FastRoute\Dispatcher\RegexBasedAbstract::class);
-        $files[] = $classLoader->findFile(\FastRoute\Dispatcher\GroupCountBased::class);
 
         $files = array_merge($files, $classFiles);
         $preload = "<?php\n";
         foreach ($files as $file) {
-            $preload .= 'opcache_compile_file(' . var_export(realpath($file), true) . ");\n";
+            $preload .= 'require_once(' . var_export(realpath($file), true) . ");\n";
         }
 
         $tempfile = tempnam(dirname($filename), 'fas-routing');

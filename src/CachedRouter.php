@@ -11,31 +11,33 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class CachedRouter implements RequestHandlerInterface
 {
-    private ?ContainerInterface $container;
-    private array $routeGroupData;
-    private CachedMiddleware $middlewares;
-    private Autowire $autowire;
+    protected ?ContainerInterface $container;
+    protected array $routeGroupData;
+    protected array $middlewares;
+    protected Autowire $autowire;
 
-    public function __construct(?ContainerInterface $container = null, $data)
+    public function __construct(?ContainerInterface $container = null)
     {
         $this->autowire = new Autowire($container);
         $this->container = $this->autowire->getContainer();
-        $this->routeGroupData = $data[0];
-        $this->middlewares = new CachedMiddleware($this->container, $data[1]);
-    }
-
-    public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
-    {
-        $data = @include $filename;
-        if (!is_array($data)) {
-            return null;
-        }
-        $router = new self($container, $data);
-        return $router;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->middlewares->process($request, new CachedRouterHandler(new GroupCountBased($this->routeGroupData), $this->container));
+        return (new CachedMiddleware($this->container, $this->middlewares))
+            ->process($request, new CachedRouterHandler(new GroupCountBased($this->routeGroupData), $this->container));
+    }
+
+    public static function load($filename, ?ContainerInterface $container = null): ?CachedRouter
+    {
+        $loader = @include $filename;
+        if (!is_array($loader)) {
+            return null;
+        }
+        [$file, $class] = $loader;
+        if (!class_exists($class, false)) {
+            require_once $file;
+        }
+        return new $class($container);
     }
 }
