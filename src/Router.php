@@ -43,10 +43,11 @@ class Router implements ExportableInterface, RequestHandlerInterface
     public function save($filename, $preload = null): void
     {
         $path = dirname($filename);
-        $this->routeGroup->setCachePath($path);
         $tempfile = tempnam(dirname($filename), 'fas-routing');
         @chmod($tempfile, 0666);
         $exporter = new Exporter();
+        $exporter->setAttribute('fas-routing-cache-path', $path);
+        $exporter->setAttribute('fas-routing-preload', []);
         $exported = $exporter->export($this);
         file_put_contents($tempfile, '<?php return ' . $exported . ';');
         @chmod($tempfile, 0666);
@@ -54,11 +55,12 @@ class Router implements ExportableInterface, RequestHandlerInterface
         @chmod($filename, 0666);
 
         if ($preload) {
-            $this->savePreload($preload);
+            $files = $exporter->getAttribute('fas-routing-preload', []);
+            $this->savePreload($preload, array_keys($files));
         }
     }
 
-    private function savePreload(string $filename): void
+    private function savePreload(string $filename, array $classFiles): void
     {
         foreach (get_declared_classes() as $className) {
             if (strpos($className, 'ComposerAutoloader') === 0) {
@@ -95,7 +97,7 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $files[] = $classLoader->findFile(\FastRoute\Dispatcher\RegexBasedAbstract::class);
         $files[] = $classLoader->findFile(\FastRoute\Dispatcher\GroupCountBased::class);
 
-        $files = array_merge($files, array_keys($this->routeGroup->getPreload()));
+        $files = array_merge($files, $classFiles);
         ob_start();
         include __DIR__ . '/preload.template.php';
         $preload = ob_get_contents();

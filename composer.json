@@ -24,8 +24,8 @@
     },
     "require": {
         "php": ">=7.4.0",
-        "fas/autowire": "^0.1",
-        "fas/exportable": "^0.1",
+        "fas/autowire": "^0.2",
+        "fas/exportable": "^0.2",
         "psr/http-message": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "nikic/fast-route": "^1.3"

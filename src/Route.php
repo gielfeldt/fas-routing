@@ -2,6 +2,7 @@
 
 namespace Fas\Routing;
 
+use Exception;
 use Fas\Autowire\Autowire;
 use Fas\Exportable\ExportableInterface;
 use Fas\Exportable\ExportableRaw;
@@ -70,14 +71,20 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $class = "route_$id";
         $code = 'static function handle(\\Psr\\Http\\Message\\ServerRequestInterface $request, array $vars, ?\\Psr\\Container\\ContainerInterface $container) ' . $code;
         $code = "class $class {\n$code\n}\n";
-        $file = $this->routeGroup->getCachePath() . "/route_$id.php";
+        $cachePath = $exporter->getAttribute('fas-routing-cache-path');
+        if (empty($cachePath)) {
+            throw new Exception("Could not locate cache path");
+        }
+        $file = $cachePath . "/route_$id.php";
         $tempfile = tempnam(dirname($file), 'fas-routing-route');
         @chmod($tempfile, 0666);
         file_put_contents($tempfile, "<?php\n$code\n");
         @chmod($tempfile, 0666);
         rename($tempfile, $file);
         @chmod($file, 0666);
-        $this->routeGroup->addPreload($file);
+        $preload = $exporter->getAttribute('fas-routing-preload', []);
+        $preload[$file] = $file;
+        $exporter->setAttribute('fas-routing-preload', $preload);
         return var_export([$file, $class], true);
     }
 }
