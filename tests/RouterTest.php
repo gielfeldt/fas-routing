@@ -153,7 +153,7 @@ class RouterTest extends TestCase
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
-        $router->middleware(InvokableMiddleware::class);
+        $router->middleware([InvokableMiddleware::class, '__invoke']);
         $router->middleware(
             function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
                 return TestMiddleware::staticMiddleware($request, $handler);
@@ -182,7 +182,7 @@ class RouterTest extends TestCase
         $route->middleware(TestMiddleware::class);
         $route->middleware([TestMiddleware::class, 'staticMiddleware']);
         $route->middleware([TestMiddleware::class, 'methodMiddleware']);
-        $route->middleware(InvokableMiddleware::class);
+        $route->middleware([InvokableMiddleware::class, '__invoke']);
         $route->middleware(
             function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
                 return TestMiddleware::staticMiddleware($request, $handler);
@@ -212,7 +212,7 @@ class RouterTest extends TestCase
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
-        $router->middleware(InvokableMiddleware::class);
+        $router->middleware([InvokableMiddleware::class, '__invoke']);
         $router->middleware(
             function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
                 return TestMiddleware::staticMiddleware($request, $handler);

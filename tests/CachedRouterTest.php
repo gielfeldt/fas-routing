@@ -183,7 +183,7 @@ class CachedRouterTest extends TestCase
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
-        $router->middleware(InvokableMiddleware::class);
+        $router->middleware([InvokableMiddleware::class, '__invoke']);
         $router->middleware(
             function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
                 return TestMiddleware::staticMiddleware($request, $handler);
@@ -218,7 +218,7 @@ class CachedRouterTest extends TestCase
         $router->middleware(TestMiddleware::class);
         $router->middleware([TestMiddleware::class, 'staticMiddleware']);
         $router->middleware([TestMiddleware::class, 'methodMiddleware']);
-        $router->middleware(InvokableMiddleware::class);
+        $router->middleware([InvokableMiddleware::class, '__invoke']);
         $router->middleware(
             function (ServerRequestInterface $request, RequestHandlerInterface $handler) {
                 return TestMiddleware::staticMiddleware($request, $handler);

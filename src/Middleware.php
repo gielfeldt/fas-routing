@@ -54,11 +54,13 @@ class Middleware implements MiddlewareInterface, RequestHandlerInterface, Export
         }
 
         if (is_string($middleware) && $this->container->has($middleware)) {
-            $middleware = $this->container->get($middleware);
+            return $this->container->get($middleware)->process($request, $this);
         }
+
         if ($middleware instanceof MiddlewareInterface) {
             return $middleware->process($request, $this);
         }
+
         return $this->autowire->call($middleware, ['request' => $request, 'handler' => $this]);
     }
 
@@ -69,16 +71,10 @@ class Middleware implements MiddlewareInterface, RequestHandlerInterface, Export
         $middlewares = [];
         foreach ($this->getMiddlewares() as $middleware) {
             if (is_string($middleware) && $autowire->getContainer()->has($middleware)) {
-                $instance = $autowire->getContainer()->get($middleware);
-                if ($instance instanceof MiddlewareInterface) {
-                    $middleware = $autowire->compileCall([$middleware, 'process']);
-                } elseif (is_callable($instance)) {
-                    $middleware = $autowire->compileCall($middleware);
-                }
+                $middleware = $autowire->compileCall([$middleware, 'process']);
             } else {
                 $middleware = $autowire->compileCall($middleware);
             }
-
 
             $code = (string) $middleware;
             $id = hash('sha256', $code);
