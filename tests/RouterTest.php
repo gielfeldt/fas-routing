@@ -131,9 +131,9 @@ class RouterTest extends TestCase
 
         $request = (new Psr17Factory())->createServerRequest('GET', '/fail');
 
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode(500);
-        $this->expectExceptionMessage('Internal server error');
+        $this->expectException(Exception::class);
+        $this->expectExceptionCode(123);
+        $this->expectExceptionMessage('failed');
         $router->handle($request);
     }
 

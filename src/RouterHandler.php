@@ -31,12 +31,8 @@ class RouterHandler implements RequestHandlerInterface
             case \FastRoute\Dispatcher::FOUND:
                 $route = $routeInfo[1];
                 $vars = $routeInfo[2];
-                try {
-                    $route->setArguments($vars);
-                    return $route->handle($request);
-                } catch (Throwable $e) {
-                    throw $e instanceof HttpException ? $e : new HttpException(500, "Internal server error", $e);
-                }
+                $route->setArguments($vars);
+                return $route->handle($request);
         }
         // Ignore extra defensive coding coverage
         // @codeCoverageIgnoreStart
