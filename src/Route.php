@@ -55,7 +55,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $handler = $exporter->export($compiled);
         $middlewares = $exporter->export($this->middleware);
 
-        $request = "function request(\\" . ServerRequestInterface::class . '$request): ResponseInterface { ';
+        $request = "function request(\\" . ServerRequestInterface::class . ' $request): ResponseInterface { ';
         if (empty($this->middleware->getMiddlewares())) {
             $request .= 'return $this->handle($request);';
         } else {
@@ -70,7 +70,7 @@ class Route implements ExportableInterface, RequestHandlerInterface
         $code .= "class $class extends \Fas\Routing\CachedRoute {\n";
         $code .= "    const MIDDLEWARES = $middlewares;\n";
         $code .= "    $request\n";
-        $code .= "    function handle(\\" . ServerRequestInterface::class . '$request): ResponseInterface { return (' . $handler . ')($this->container, [\'request\' => $request] + $this->args); }';
+        $code .= "    function handle(\\" . ServerRequestInterface::class . ' $request): ResponseInterface { return (' . $handler . ')($this->container, [\'request\' => $request] + $this->args); }';
         $code .= "}\n";
 
         $cachePath = $exporter->getAttribute('fas-routing-cache-path');
