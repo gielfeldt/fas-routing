@@ -95,7 +95,10 @@ $router->middleware(['some_container_entry_that_is_an_object', 'method']);
 $router->middleware(['some_class_name', 'method']);
 $router->middleware([$some_object, 'method']);
 $router->middleware($some_object_that_is_a_psr_middleware);
-$router->middleware($some_object_that_is_invokable);
+
+// for invokable objects, use the __invoke method, as it otherwise would be considered
+// a middlewareinterface object
+$router->middleware([$some_object_that_is_invokable, '__invoke']);
 
 
 ```
@@ -210,6 +213,35 @@ $response = $router->handle($request);
 (new SapiEmitter)->emit($response);
 ```
 
+# Whoops error response
+
+```php
+require __DIR__ . '/../vendor/autoload.php';
+
+use Fas\Autowire\Container;
+use Fas\Routing\Router;
+use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+use Psr\Http\Message\ResponseFactoryInterface;
+
+$container = new Container();
+$container->set(ResponseFactoryInterface::class, ResponseFactory::class);
+
+$router = new Router($container);
+$router->middleware([WhoopsMiddleware::class, 'withStackTrace']);
+
+$router->map('GET', '/hello/[{name}]', function (ResponseFactoryInterface $responseFactory, $name = 'nobody') {
+    $response = $responseFactory->createResponse(200);
+    $response->getBody()->write("Hello: $name");
+    return $response;
+});
+
+// Handle actual request
+$request = ServerRequestFactory::fromGlobals();
+$response = $router->handle($request);
+(new SapiEmitter)->emit($response);
+```
 
 [1]:  https://packagist.org/packages/fas/routing
 [2]:  https://packagist.org/packages/fas/routing#dev-main

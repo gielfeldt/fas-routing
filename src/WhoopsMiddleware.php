@@ -27,6 +27,13 @@ class WhoopsMiddleware implements MiddlewareInterface
         $this->responseFactory = $responseFactory;
     }
 
+    public static function withStackTrace(ResponseFactoryInterface $responseFactory)
+    {
+        $middleware = new self($responseFactory);
+        $middleware->includeStackTrace(true);
+        return $middleware;
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         try {
