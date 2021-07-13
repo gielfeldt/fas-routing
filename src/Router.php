@@ -97,6 +97,8 @@ class Router implements ExportableInterface, RequestHandlerInterface
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouterHandler::class);
         $files[] = $classLoader->findFile(\Fas\Routing\CachedRouter::class);
 
+        $files[] = $classLoader->findFile(\Fas\Routing\HttpException::class);
+
         $files = array_merge($files, $classFiles);
         $preload = "<?php\n";
         foreach ($files as $file) {
