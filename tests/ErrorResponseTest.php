@@ -2,7 +2,7 @@
 
 namespace Fas\Routing\Tests;
 
-use Fas\Routing\ErrorResponse;
+use Fas\Routing\WhoopsMiddleware;
 use Exception;
 use Fas\Routing\Router;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -16,7 +16,7 @@ class ErrorResponseTest extends TestCase
         $factory = new Psr17Factory();
 
         $router = new Router();
-        $router->middleware(new ErrorResponse($factory));
+        $router->middleware(new WhoopsMiddleware($factory));
 
         $router->map(
             'GET',
