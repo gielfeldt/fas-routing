@@ -215,11 +215,16 @@ $response = $router->handle($request);
 
 # Whoops error response
 
+```bash
+composer require filp/whoops
+```
+
 ```php
 require __DIR__ . '/../vendor/autoload.php';
 
 use Fas\Autowire\Container;
 use Fas\Routing\Router;
+use Fas\Routing\WhoopsMiddleware;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
@@ -227,9 +232,11 @@ use Psr\Http\Message\ResponseFactoryInterface;
 
 $container = new Container();
 $container->set(ResponseFactoryInterface::class, ResponseFactory::class);
+$container->set(WhoopsMiddleware::class, [WhoopsMiddleware::class, 'withStackTrace']);
 
 $router = new Router($container);
-$router->middleware([WhoopsMiddleware::class, 'withStackTrace']);
+$router->middleware(WhoopsMiddleware::class);
+
 
 $router->map('GET', '/hello/[{name}]', function (ResponseFactoryInterface $responseFactory, $name = 'nobody') {
     $response = $responseFactory->createResponse(200);
