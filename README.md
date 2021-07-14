@@ -213,7 +213,7 @@ $response = $router->handle($request);
 (new SapiEmitter)->emit($response);
 ```
 
-# Whoops error response
+# Whoops error response using container
 
 ```bash
 composer require filp/whoops
@@ -242,6 +242,37 @@ $router->map('GET', '/hello/[{name}]', function (ResponseFactoryInterface $respo
     $response = $responseFactory->createResponse(200);
     $response->getBody()->write("Hello: $name");
     return $response;
+});
+
+// Handle actual request
+$request = ServerRequestFactory::fromGlobals();
+$response = $router->handle($request);
+(new SapiEmitter)->emit($response);
+```
+
+# Whoops without container
+
+```php
+require __DIR__ . '/vendor/autoload.php';
+
+use Fas\Routing\Router;
+use Fas\Routing\WhoopsMiddleware;
+use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+$router = new Router();
+$router->middleware(static function (ServerRequestInterface $request, RequestHandlerInterface $handler, ResponseFactory $responseFactory) {
+    return WhoopsMiddleware::withStackTrace($responseFactory)->process($request, $handler);
+});
+
+$router->map('GET', '/hello/[{name}]', static function (ResponseFactory $responseFactory, $name = 'john doe') {
+    $response = $responseFactory->createResponse(200);
+    $response->getBody()->write(json_encode(['name' => $name]));
+    return $response
+        ->withHeader('Content-Type', 'application/json');
 });
 
 // Handle actual request
